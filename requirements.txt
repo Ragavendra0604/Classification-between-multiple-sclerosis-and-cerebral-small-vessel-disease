@@ -6,4 +6,4 @@ matplotlib
 gunicorn
 joblib
 nibabel
-pillow
+pillow scikit-image
