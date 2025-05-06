@@ -1,0 +1,9 @@
+flask
+numpy
+opencv-python
+scikit-learn
+matplotlib
+gunicorn
+joblib
+nibabel
+pillow
