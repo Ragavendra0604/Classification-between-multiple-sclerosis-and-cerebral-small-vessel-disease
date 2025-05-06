@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Disease Detection - MS & CSVD</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <style>
+    body {
+      background: linear-gradient(135deg, #6a82fb, #fc5c7d);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      overflow-y: scroll;
+      min-height: 100vh;
+    }
+    h2 {
+      color: #ffffff;
+      font-weight: 700;
+      text-align: center;
+      text-shadow: 0 0 8px #ffffff, 0 0 20px #6a82fb, 0 0 30px #fc5c7d;
+    }
+    .card {
+      border-radius: 20px;
+      border: none;
+      background-color: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.15);
+    }
+    .form-label {
+      font-weight: 500;
+      color: #333;
+    }
+    .form-select:focus, .form-control:focus {
+      box-shadow: 0 0 8px 2px #6a82fb;
+      border-color: #6a82fb;
+    }
+    .btn-primary {
+      background-color: #6a82fb;
+      border: none;
+      border-radius: 8px;
+      transition: background-color 0.3s ease, transform 0.3s ease;
+      box-shadow: 0 0 10px #6a82fb;
+    }
+    .btn-primary:hover {
+      background-color: #fc5c7d;
+      transform: scale(1.05);
+      box-shadow: 0 0 20px #fc5c7d, 0 0 30px #6a82fb;
+    }
+    #result .alert {
+      font-size: 1.1rem;
+      font-weight: 500;
+      border-radius: 8px;
+      background-color: #e7f7ff;
+      color: #333;
+      border: 1px solid #007bff;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    #result .alert-info {
+      background-color: #d1ecf1;
+      color: #0c5460;
+      border-color: #bee5eb;
+      transition: background-color 0.4s ease, transform 0.3s ease, box-shadow 0.3s ease;
+      cursor: pointer;
+    }
+    #result .alert-info:hover {
+      background-color: #bfe9ff;
+      box-shadow: 0 0 20px rgba(106, 130, 251, 0.6), 0 0 30px rgba(252, 92, 125, 0.3);
+      transform: scale(1.02);
+    }
+    .image-container {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      margin-top: 20px;
+      text-align: center;
+    }
+    .image-card {
+      flex: 1;
+      max-width: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .image-container img {
+      width: 100%;
+      height: auto;
+      border: 2px solid #6a82fb;
+      border-radius: 10px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .image-container img:hover {
+      transform: translateY(-5px) scale(1.02);
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.15);
+    }
+    .prediction-details {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+      color: #fff;
+      text-align: center;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .prediction-details:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.15);
+    }
+    .content-wrapper {
+      max-height: 100vh;
+      overflow-y: auto;
+    }
+    #result {
+      display: none;
+    }
+    @media (max-width: 576px) {
+      .image-container {
+        flex-direction: column;
+        align-items: center;
+      }
+      .image-card {
+        max-width: 90%;
+      }
+    }
+
+    /* Spinner Styles */
+    #spinner {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.6);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+      backdrop-filter: blur(3px);
+    }
+  </style>
+</head>
+<body>
+  <div class="container py-5">
+    <h2 class="mb-4">Detect MS or CSVD from MRI</h2>
+    <div class="card p-4 shadow">
+      <form id="diseaseForm">
+        <div class="mb-3">
+          <label for="disease" class="form-label">Select Disease:</label>
+          <select class="form-select" id="disease" required>
+            <option value="">-- Choose --</option>
+            <option value="MS">Multiple Sclerosis</option>
+            <option value="CSVD">Cerebral Small Vessel Disease</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label for="image" class="form-label">Upload MRI Image:</label>
+          <input type="file" class="form-control" id="image" accept=".nii,.nii.gz," required>
+        </div>
+        <button type="submit" class="btn btn-primary">Analyze</button>
+      </form>
+
+      <div id="imageSection" class="image-container"></div>
+      <div id="result" class="mt-4"></div>
+    </div>
+  </div>
+
+  <!-- Spinner Overlay -->
+  <div id="spinner">
+    <div class="spinner-border text-primary" role="status" style="width: 4rem; height: 4rem;">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('diseaseForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const disease = document.getElementById('disease').value;
+      const image = document.getElementById('image').files[0];
+
+      if (!disease || !image) {
+        alert("Please select disease and upload an image.");
+        return;
+      }
+
+      document.getElementById('imageSection').innerHTML = '';
+      const spinner = document.getElementById('spinner');
+      spinner.style.display = 'flex';
+
+      const formData = new FormData();
+      formData.append('disease', disease);
+      formData.append('image', image);
+
+      try {
+        const response = await fetch('/predict', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await response.json();
+        spinner.style.display = 'none';
+
+        if (data.error) {
+          alert(data.error);
+        } else {
+          const { prediction, confidence, input_image_url, processed_image_url } = data;
+
+          document.getElementById('result').style.display = 'block';
+          document.getElementById('result').innerHTML = `
+            <div class="alert alert-info text-center" style="font-size: 1.25rem; border: 2px dashed #6a82fb;">
+              🧠 <strong>Prediction:</strong> ${prediction} <br>
+              📊 <strong>Confidence:</strong> ${confidence.toFixed(2)}%
+            </div>
+            <div class="image-container">
+              <div class="image-card">
+                <h5>Original MRI</h5>
+                <img src="${input_image_url}" alt="Input Image">
+              </div>
+              <div class="image-card">
+                <h5>Processed Result</h5>
+                <img src="${processed_image_url}" alt="Processed Image">
+              </div>
+            </div>
+          `;
+        }
+      } catch (error) {
+        spinner.style.display = 'none';
+        console.error("Error:", error);
+        alert("There was an error processing your request. Please try again.");
+      }
+    });
+  </script>
+</body>
+</html>
