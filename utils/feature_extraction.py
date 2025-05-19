@@ -46,6 +46,5 @@ def extract_features(slices, hog_orientations=6, hog_pix_cell=(32, 32), hog_bloc
         except Exception as e:
             print(f"Slice {idx} failed: {e}")
             continue
-    if features:
-        return np.array(features, dtype=np.float32)
-        gc.collect()
+            
+    return np.array(features, dtype=np.float32)
