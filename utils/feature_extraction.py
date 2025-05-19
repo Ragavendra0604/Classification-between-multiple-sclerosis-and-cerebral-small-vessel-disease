@@ -3,7 +3,7 @@ from skimage.feature import hog, graycomatrix, graycoprops
 from tqdm import tqdm
 import gc
 
-def extract_features(slices, hog_orientations=8, hog_pix_cell=(16, 16), hog_block=(1, 1)):
+def extract_features(slices, hog_orientations=6, hog_pix_cell=(32, 32), hog_block=(1, 1)):
     features = []
 
     for idx, slice_img in enumerate(tqdm(slices, desc="Extracting Features")):
@@ -32,10 +32,15 @@ def extract_features(slices, hog_orientations=8, hog_pix_cell=(16, 16), hog_bloc
             ]
 
             # HOG + GLCM
-            combined = np.hstack((hog_feat, glcm_features)).astype(np.float32)
+            combined = np.hstack((hog_feat, glcm_features)).astype(np.float16)
             features.append(combined)
 
-            if idx % 100 == 0:
+            if idx % 25 == 0:
+                gc.collect()
+
+            if len(features) >= 50:
+                yield np.array(features, dtype=np.float32)
+                features=[]
                 gc.collect()
 
         except Exception as e:
